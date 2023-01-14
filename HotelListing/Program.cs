@@ -1,16 +1,17 @@
 using HotelListing.Configurations;
 using HotelListing.Data;
+using HotelListing.IRepository;
+using HotelListing.Repository;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add DB Context
 builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("sqlConnection")));
 
-// Add services to the container.
 
-builder.Services.AddControllers();
 
 //Add Cors
 builder.Services.AddCors(o => {
@@ -25,6 +26,8 @@ builder.Services.AddEndpointsApiExplorer();
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(MapperInitilizer));
 
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+
 builder.Services.AddSwaggerGen();
 
 // Logger 
@@ -34,6 +37,12 @@ builder.Host.UseSerilog((ctx,lc)=>lc
                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.ff zzz} [{level:u3}] {Message:lj}{NewLine}{Exception}",
                    rollingInterval: RollingInterval.Day,
                    restrictedToMinimumLevel:Serilog.Events.LogEventLevel.Information));
+
+// Add services to the container.
+
+builder.Services.AddControllers().AddNewtonsoftJson(op=>
+            op.SerializerSettings.ReferenceLoopHandling=
+            Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
 
 var app = builder.Build();
